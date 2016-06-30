@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys
+
 import os
 from datetime import datetime
 import functools
@@ -701,7 +701,7 @@ def write_pidfile():
         fp.write(pid)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     write_pidfile()
     debug = getattr(config, 'env', 'prod') != 'prod'
     app.run(debug=debug, host='0.0.0.0', port=8081)
