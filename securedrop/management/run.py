@@ -157,6 +157,9 @@ def run():
         DevServerProcess('Journalist Interface',
                          ['python', 'journalist.py'],
                          'cyan'),
+        DevServerProcess('SASS Compiler',
+                         ['sass', '--watch', 'sass:static/css'],
+                         'magenta'),
     ]
 
     monitor = DevServerProcessMonitor(procs)
