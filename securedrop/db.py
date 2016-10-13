@@ -40,18 +40,17 @@ if os.environ.get('SECUREDROP_ENV') == 'test':
 # http://flask.pocoo.org/docs/patterns/sqlalchemy/
 
 if config.DATABASE_ENGINE == "sqlite":
-    engine = create_engine(
-        config.DATABASE_ENGINE + ":///" +
-        config.DATABASE_FILE
-    )
+    SQLALCHEMY_DATABASE_URI = "{}:///{}".format(config.DATABASE_ENGINE,
+                                                config.DATABASE_FILE)
 else:
-    engine = create_engine(
-        config.DATABASE_ENGINE + '://' +
-        config.DATABASE_USERNAME + ':' +
-        config.DATABASE_PASSWORD + '@' +
-        config.DATABASE_HOST + '/' +
-        config.DATABASE_NAME, echo=False
-    )
+    SQLALCHEMY_DATABASE_URI = "{}://{}:{}@{}/".format(config.DATABASE_ENGINE,
+                                                      config.DATABASE_USERNAME,
+                                                      config.DATABASE_PASSWORD,
+                                                      config.DATABASE_HOST,
+                                                      config.DATABASE_NAME)
+
+engine = create_engine(SQLALCHEMY_DATABASE_URI)
+migration_dir = config.SQLALCHEMY_MIGRATE_REPO
 
 db_session = scoped_session(sessionmaker(autocommit=False,
                                          autoflush=False,
