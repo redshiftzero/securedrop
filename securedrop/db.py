@@ -417,3 +417,11 @@ class JournalistLoginAttempt(Base):
 # Declare (or import) models before init_db
 def init_db():
     Base.metadata.create_all(bind=engine)
+    if not os.path.exists(migration_dir):
+        api.create(migration_dir, 'database repository')
+        api.version_control(SQLALCHEMY_DATABASE_URI,
+                            migration_dir)
+    else:  # the database already exists
+        api.version_control(SQLALCHEMY_DATABASE_URI,
+                            migration_dir,
+                            api.version(migration_dir))
