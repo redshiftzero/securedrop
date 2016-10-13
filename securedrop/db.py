@@ -418,10 +418,37 @@ class JournalistLoginAttempt(Base):
 def init_db():
     Base.metadata.create_all(bind=engine)
     if not os.path.exists(migration_dir):
-        api.create(migration_dir, 'database repository')
+        api.create(migration_dir, 'SecureDrop database repository')
         api.version_control(SQLALCHEMY_DATABASE_URI,
                             migration_dir)
     else:  # the database already exists
         api.version_control(SQLALCHEMY_DATABASE_URI,
                             migration_dir,
                             api.version(migration_dir))
+
+
+def prepare_migration():
+    v = api.db_version(SQLALCHEMY_DATABASE_URI, migration_dir)
+    migration = migration_dir + ('/versions/%03d_migration.py' % (v+1))
+    tmp_module = imp.new_module('old_model')
+    old_model = api.create_model(SQLALCHEMY_DATABASE_URI, migration_dir)
+    exec(old_model, tmp_module.__dict__)
+    script = api.make_update_script_for_model(SQLALCHEMY_DATABASE_URI, migration_dir, tmp_module.meta, db.metadata)
+    open(migration, "wt").write(script)
+    api.upgrade(SQLALCHEMY_DATABASE_URI, migration_dir)
+    v = api.db_version(SQLALCHEMY_DATABASE_URI, migration_dir)
+
+    print('New migration saved as ' + migration)
+    print('Current database version: ' + str(v))
+
+
+def downgrade():
+    api.downgrade(SQLALCHEMY_DATABASE_URI, migration_dir)
+    db_version = api.db_version(SQLALCHEMY_DATABASE_URI, migration_dir)
+    print('Current database version: {}'.format(db_version))
+
+
+def upgrade():
+    api.upgrade(SQLALCHEMY_DATABASE_URI, migration_dir)
+    db_version = api.db_version(SQLALCHEMY_DATABASE_URI, migration_dir)
+    print('Current database version: {}'.format(db_version))
