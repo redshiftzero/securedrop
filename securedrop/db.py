@@ -9,6 +9,10 @@ try:
 except:
     from StringIO import StringIO
 
+import imp
+
+from migrate.versioning import api
+
 from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
