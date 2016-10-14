@@ -335,14 +335,28 @@ def edit_account():
     return render_template('edit_account.html')
 
 
+def get_source_tags_in_use():
+    source_tags = db_session.query(SourceTag, TagLabel).join(TagLabel).all()
+    return source_tags_used
+
+
+def get_source_tags(source_id):
+    source = Source.query.filter(Source.id == source_id).first()
+    source_tags = db_session.query(SourceTag, TagLabel).join(TagLabel).filter(SourceTag.source_id == source.id).all()
+    return source_tags
+
+
 def create_source_tag(source_id, label_id):
-    db_session.add(SourceTag(source_id=source_id,
+    source = Source.query.filter(Source.id == source_id).first()
+    db_session.add(SourceTag(source_id=source.id,
                              label_id=label_id))
     db_session.commit()
 
 
 def delete_source_tag(source_id, label_id):
-    matching_tag = SourceTag.query.filter(SourceTag.label_id == label_id).all()
+    source = Source.query.filter(Source.id == source_id).first()
+    matching_tag = SourceTag.query.filter(and_(SourceTag.label_id == label_id,
+                                               SourceTag.source_id == source.id)).all()
     for tag in matching_tag:
         db_session.delete(tag)
     db_session.commit()
@@ -440,7 +454,6 @@ def remove_star(sid):
 def index():
     unstarred = []
     starred = []
-    source_labels = []
 
     # Long SQLAlchemy statements look best when formatted according to
     # the Pocoo style guide, IMHO:
@@ -448,9 +461,11 @@ def index():
     sources = Source.query.filter_by(pending=False) \
                           .order_by(Source.last_updated.desc()) \
                           .all()
+    source_labels = {}
+    all_source_labels = get_source_tags_in_use()
     for source in sources:
         star = SourceStar.query.filter_by(source_id=source.id).first()
-        #labels = 
+        source_labels.update({source.id: get_source_tags(source.id)})
         if star and star.starred:
             starred.append(source)
         else:
@@ -460,7 +475,7 @@ def index():
                                        downloaded=False).all())
 
     return render_template('index.html', unstarred=unstarred, starred=starred,
-                           source_labels=source_labels)
+                           source_labels=source_labels, all_labels=all_source_labels)
 
 
 @app.route('/col/<sid>')
