@@ -13,6 +13,15 @@
         <button type="submit" name="action" value="un-star" class="small"><i class="fa fa-minus-circle"></i> Un-star Selected</button>
       </p>
 
+      <p>
+      <!--<div class="label">-->
+                <div>Filter by label: 
+      {% for label in all_labels %}
+      <a class="btn small" >{{ label.TagLabel.label_text }}</a>
+      {% endfor %}
+                </div>
+      <!--</div>--></p>
+
       {% if starred %}
         <ul id="cols" class="plain starred">
           {% for source in starred %}
@@ -34,10 +43,10 @@
                   </span>
                 {% endif %}
               </div>
-              <div class="submission-count">
+              <div class="label">
                 <div>
                 {% for tag in source_labels[source.id] %}
-                <span><i class="fa fa-file-text-o"></i> {{ tag.TagLabel.label_text }}</span>
+                <span>{{ tag.TagLabel.label_text }}</span>
                 {% endfor %}
                 </div>
               </div>
@@ -70,7 +79,7 @@
               <div class="submission-count">
                 <div>
                 {% for tag in source_labels[source.id] %}
-                <span><i class="fa fa-file-text-o"></i> {{ tag.TagLabel.label_text }}</span>
+                <span>{{ tag.TagLabel.label_text }}</span>
                 {% endfor %}
                 </div>
               </div>
