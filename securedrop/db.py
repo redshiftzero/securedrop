@@ -3,6 +3,8 @@ import datetime
 import base64
 import binascii
 
+import pdb
+
 # Find the best implementation available on this platform
 try:
     from cStringIO import StringIO
@@ -12,6 +14,8 @@ except:
 import imp
 
 from migrate.versioning import api
+
+import shutil
 
 from sqlalchemy import create_engine, ForeignKey
 from sqlalchemy.orm import scoped_session, sessionmaker, relationship, backref
@@ -427,28 +431,34 @@ def init_db():
                             api.version(migration_dir))
 
 
-def prepare_migration():
+def backup_db():
+    shutil.copy(config.DATABASE_FILE,
+                os.path.join(config.SECUREDROP_DATA_ROOT, 'backup_db.sqlite'))
+
+
+def attempt_migration():
     v = api.db_version(SQLALCHEMY_DATABASE_URI, migration_dir)
     migration = migration_dir + ('/versions/%03d_migration.py' % (v+1))
     tmp_module = imp.new_module('old_model')
     old_model = api.create_model(SQLALCHEMY_DATABASE_URI, migration_dir)
     exec(old_model, tmp_module.__dict__)
-    script = api.make_update_script_for_model(SQLALCHEMY_DATABASE_URI, migration_dir, tmp_module.meta, db.metadata)
-    open(migration, "wt").write(script)
-    api.upgrade(SQLALCHEMY_DATABASE_URI, migration_dir)
-    v = api.db_version(SQLALCHEMY_DATABASE_URI, migration_dir)
 
-    print('New migration saved as ' + migration)
-    print('Current database version: ' + str(v))
+    # only migrate if the database structure has changed
+    if len(tmp_module.meta.sorted_tables) == len(Base.metadata.sorted_tables):
+        backup_db()
+        script = api.make_update_script_for_model(SQLALCHEMY_DATABASE_URI,
+                                                  migration_dir,
+                                                  tmp_module.meta,
+                                                  Base.metadata)
+        open(migration, "wt").write(script)
+        api.upgrade(SQLALCHEMY_DATABASE_URI, migration_dir)
+        v = api.db_version(SQLALCHEMY_DATABASE_URI, migration_dir)
+
+        print('New migration saved as: ' + migration)
+        print('Current database version: ' + str(v))
 
 
 def downgrade():
     api.downgrade(SQLALCHEMY_DATABASE_URI, migration_dir)
-    db_version = api.db_version(SQLALCHEMY_DATABASE_URI, migration_dir)
-    print('Current database version: {}'.format(db_version))
-
-
-def upgrade():
-    api.upgrade(SQLALCHEMY_DATABASE_URI, migration_dir)
     db_version = api.db_version(SQLALCHEMY_DATABASE_URI, migration_dir)
     print('Current database version: {}'.format(db_version))
