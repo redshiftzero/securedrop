@@ -11,6 +11,7 @@ from flask.ext.assets import Environment
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.exc import IntegrityError
 
+import pdb
 import config
 import version
 import crypto_util
@@ -19,7 +20,8 @@ import template_filters
 from db import (db_session, Source, Journalist, Submission, Reply,
                 SourceStar, get_one_or_else, NoResultFound,
                 WrongPasswordException, BadTokenException,
-                LoginThrottledException, InvalidPasswordLength)
+                LoginThrottledException, InvalidPasswordLength,
+                SourceTag, SubmissionTag, TagLabel)
 import worker
 
 app = Flask(__name__, template_folder=config.JOURNALIST_TEMPLATES_DIR)
@@ -333,6 +335,31 @@ def edit_account():
     return render_template('edit_account.html')
 
 
+def create_source_tag(source_id, label_id):
+    db_session.add(SourceTag(source_id=source_id,
+                             label_id=label_id))
+    db_session.commit()
+
+
+def delete_source_tag(source_id, label_id):
+    matching_tag = SourceTag.query.filter(SourceTag.label_id == label_id).all()
+    for tag in matching_tag:
+        db_session.delete(tag)
+    db_session.commit()
+
+
+def create_label(text_to_display):
+    db_session.add(TagLabel(label_text=text_to_display))
+    db_session.commit()
+
+
+def delete_label(displayed_text):
+    matching_label = TagLabel.query.filter(TagLabel.label_text == displayed_text).all()
+    for label in matching_label:
+        db_session.delete(label)
+    db_session.commit()
+
+
 @app.route('/account/2fa', methods=('GET', 'POST'))
 @login_required
 def account_new_two_factor():
@@ -413,6 +440,7 @@ def remove_star(sid):
 def index():
     unstarred = []
     starred = []
+    source_labels = []
 
     # Long SQLAlchemy statements look best when formatted according to
     # the Pocoo style guide, IMHO:
@@ -422,6 +450,7 @@ def index():
                           .all()
     for source in sources:
         star = SourceStar.query.filter_by(source_id=source.id).first()
+        #labels = 
         if star and star.starred:
             starred.append(source)
         else:
@@ -430,7 +459,8 @@ def index():
             Submission.query.filter_by(source_id=source.id,
                                        downloaded=False).all())
 
-    return render_template('index.html', unstarred=unstarred, starred=starred)
+    return render_template('index.html', unstarred=unstarred, starred=starred,
+                           source_labels=source_labels)
 
 
 @app.route('/col/<sid>')
