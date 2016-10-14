@@ -34,6 +34,13 @@
                   </span>
                 {% endif %}
               </div>
+              <div class="submission-count">
+                <div>
+                {% for tag in source_labels[source.id] %}
+                <span><i class="fa fa-file-text-o"></i> {{ tag.TagLabel.label_text }}</span>
+                {% endfor %}
+                </div>
+              </div>
             </li>
           {% endfor %}
         </ul>
@@ -59,6 +66,13 @@
                     <a class="btn small" href='/download_unread/{{ source.filesystem_id }}' ><i class="fa fa-download"></i> {{ source.num_unread }} unread</a>
                   </span>
                 {% endif %}
+              </div>
+              <div class="submission-count">
+                <div>
+                {% for tag in source_labels[source.id] %}
+                <span><i class="fa fa-file-text-o"></i> {{ tag.TagLabel.label_text }}</span>
+                {% endfor %}
+                </div>
               </div>
             </li>
           {% endfor %}
