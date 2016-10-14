@@ -337,7 +337,7 @@ def edit_account():
 
 def get_source_tags_in_use():
     source_tags = db_session.query(SourceTag, TagLabel).join(TagLabel).all()
-    return source_tags_used
+    return source_tags
 
 
 def get_source_tags(source_id):
