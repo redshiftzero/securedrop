@@ -38,4 +38,22 @@
 <p>No users to display</p>
 {% endif %}
 
+<p>
+  <form id="source_tag_creation" method="post">
+    <input name="csrf_token" type="hidden" value="{{ csrf_token() }}" />
+    <input name="text_to_display" type="text" placeholder="Label Text" />
+    <button type="submit" class="btn" formaction="/admin/create_source_label_type/{{ text_to_display }}"><i class="fa fa-plus"></i> Add source label</button>
+  </form>
+
+  {% for tag in source_tags %}
+    <form id="source_tag_actions" method="post">
+      <input name="csrf_token" type="hidden" value="{{ csrf_token() }}" />
+      <button type="submit" class="tag-label" formaction="/admin/delete_source_label_type/{{ tag.id }}">{{ tag.label_text }} <i class="fa fa-times" aria-hidden="true"></i></button>
+    </form>
+  {% endfor %}
+</p>
+
+<p><button type="submit" class="btn" id="add-tag"><i class="fa fa-plus"></i> Add submission label</button>
+
+
 {% endblock %}

@@ -10,6 +10,7 @@ from flask_wtf.csrf import CsrfProtect
 from flask.ext.assets import Environment
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import and_
 
 import pdb
 import config
@@ -21,7 +22,8 @@ from db import (db_session, Source, Journalist, Submission, Reply,
                 SourceStar, get_one_or_else, NoResultFound,
                 WrongPasswordException, BadTokenException,
                 LoginThrottledException, InvalidPasswordLength,
-                SourceTag, SubmissionTag, TagLabel)
+                SourceTag, SubmissionTag, SourceLabelType,
+                SubmissionLabelType)
 import worker
 
 app = Flask(__name__, template_folder=config.JOURNALIST_TEMPLATES_DIR)
@@ -153,7 +155,10 @@ def logout():
 @admin_required
 def admin_index():
     users = Journalist.query.all()
-    return render_template("admin.html", users=users)
+    all_source_tags = get_all_defined_source_tags()
+    # all_submission_tags = get_all_defined_submission_tags()
+    return render_template("admin.html", users=users,
+        source_tags=all_source_tags)
 
 
 @app.route('/admin/add', methods=('GET', 'POST'))
@@ -336,14 +341,56 @@ def edit_account():
 
 
 def get_source_tags_in_use():
-    source_tags = db_session.query(SourceTag, TagLabel).join(TagLabel).all()
+    """Get only the source tags currently being used"""
+    source_tags = db_session.query(SourceTag, SourceLabelType) \
+                            .join(SourceLabelType) \
+                            .group_by(SourceLabelType.label_text).all()
+    return source_tags
+
+
+def get_all_defined_source_tags():
+    """Get all defined source tags"""
+    source_tags = db_session.query(SourceLabelType).all()
     return source_tags
 
 
 def get_source_tags(source_id):
     source = Source.query.filter(Source.id == source_id).first()
-    source_tags = db_session.query(SourceTag, TagLabel).join(TagLabel).filter(SourceTag.source_id == source.id).all()
+    source_tags = db_session.query(SourceTag, SourceLabelType) \
+                            .join(SourceLabelType) \
+                            .filter(SourceTag.source_id == source.id) \
+                            .group_by(SourceLabelType.label_text).all()
     return source_tags
+
+
+def create_source_label(text_to_display):
+    db_session.add(SourceLabelType(label_text=text_to_display))
+    db_session.commit()
+
+
+def delete_source_label(label_id):
+    matching_label = SourceLabelType.query.filter(SourceLabelType.id == label_id).all()
+    for label in matching_label:
+        db_session.delete(label)
+    db_session.commit()
+
+
+@app.route('/admin/delete_source_label_type/<int:tag_id>', methods=('POST',))
+@admin_required
+def admin_delete_source_label_type(tag_id):
+    delete_source_label(tag_id)
+    return redirect(url_for('admin_index'))
+
+
+@app.route('/admin/create_source_label_type/', methods=('POST',))
+@admin_required
+def admin_create_source_label_type():
+    text_to_display = request.form['text_to_display']
+    try:
+        create_source_label(text_to_display)
+    except:
+        flash('Failed')
+    return redirect(url_for('admin_index'))
 
 
 def create_source_tag(source_id, label_id):
@@ -362,16 +409,20 @@ def delete_source_tag(source_id, label_id):
     db_session.commit()
 
 
-def create_label(text_to_display):
-    db_session.add(TagLabel(label_text=text_to_display))
-    db_session.commit()
+@app.route("/col/add_label/<sid>/<int:label_id>", methods=('POST',))
+@login_required
+def add_label(sid, label_id):
+    source = get_source(sid)
+    create_source_tag(source.id, label_id)
+    return redirect(url_for('index'))
 
 
-def delete_label(displayed_text):
-    matching_label = TagLabel.query.filter(TagLabel.label_text == displayed_text).all()
-    for label in matching_label:
-        db_session.delete(label)
-    db_session.commit()
+@app.route("/col/remove_label/<sid>/<int:label_id>", methods=('POST',))
+@login_required
+def remove_label(sid, label_id):
+    source = get_source(sid)
+    delete_source_tag(source.id, label_id)
+    return redirect(url_for('index'))
 
 
 @app.route('/account/2fa', methods=('GET', 'POST'))
@@ -475,7 +526,8 @@ def index():
                                        downloaded=False).all())
 
     return render_template('index.html', unstarred=unstarred, starred=starred,
-                           source_labels=source_labels, all_labels=all_source_labels)
+                           source_labels=source_labels,
+                           all_labels=all_source_labels)
 
 
 @app.route('/col/<sid>')
