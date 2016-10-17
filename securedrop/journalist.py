@@ -60,6 +60,16 @@ def get_source(sid):
     return source
 
 
+def get_submission(filename):
+    """Return a Submission object, representing the database row, for the
+    submission with filename `filename`."""
+    submission = None
+    query = Submission.query.filter(Submission.filename == filename)
+    submission = get_one_or_else(query, app.logger, abort)
+
+    return submission
+
+
 @app.before_request
 def setup_g():
     """Store commonly used values in Flask's special g object"""
@@ -156,9 +166,10 @@ def logout():
 def admin_index():
     users = Journalist.query.all()
     all_source_tags = get_all_defined_source_tags()
-    # all_submission_tags = get_all_defined_submission_tags()
+    all_submission_tags = get_all_defined_submission_tags()
     return render_template("admin.html", users=users,
-        source_tags=all_source_tags)
+        source_tags=all_source_tags,
+        submission_tags=all_submission_tags)
 
 
 @app.route('/admin/add', methods=('GET', 'POST'))
@@ -354,6 +365,12 @@ def get_all_defined_source_tags():
     return source_tags
 
 
+def get_all_defined_submission_tags():
+    """Get all defined submission tags"""
+    submission_tags = db_session.query(SubmissionLabelType).all()
+    return submission_tags
+
+
 def get_source_tags(source_id):
     source = Source.query.filter(Source.id == source_id).first()
     source_tags = db_session.query(SourceTag, SourceLabelType) \
@@ -363,13 +380,24 @@ def get_source_tags(source_id):
     return source_tags
 
 
-def create_source_label(text_to_display):
-    db_session.add(SourceLabelType(label_text=text_to_display))
-    db_session.commit()
+def get_submission_tags(submission_id):
+    submission = Submission.query.filter(Submission.id == submission_id).first()
+    submission_tags = db_session.query(SubmissionTag, SubmissionLabelType) \
+                            .join(SubmissionLabelType) \
+                            .filter(SubmissionTag.submission_id == submission.id) \
+                            .group_by(SubmissionLabelType.label_text).all()
+    return submission_tags
 
 
 def delete_source_label(label_id):
     matching_label = SourceLabelType.query.filter(SourceLabelType.id == label_id).all()
+    for label in matching_label:
+        db_session.delete(label)
+    db_session.commit()
+
+
+def delete_submission_label(label_id):
+    matching_label = SubmissionLabelType.query.filter(SubmissionLabelType.id == label_id).all()
     for label in matching_label:
         db_session.delete(label)
     db_session.commit()
@@ -386,10 +414,32 @@ def admin_delete_source_label_type(tag_id):
 @admin_required
 def admin_create_source_label_type():
     text_to_display = request.form['text_to_display']
-    try:
-        create_source_label(text_to_display)
-    except:
-        flash('Failed')
+    all_labels = [x.label_text for x in get_all_defined_source_tags()]
+    if text_to_display not in all_labels:
+        db_session.add(SourceLabelType(label_text=text_to_display))
+        db_session.commit()    
+    else:
+        flash('Tag already exists!', 'source')
+    return redirect(url_for('admin_index'))
+
+
+@app.route('/admin/create_submission_label_type/', methods=('POST',))
+@admin_required
+def admin_create_submission_label_type():
+    text_to_display = request.form['text_to_display']
+    all_labels = [x.label_text for x in get_all_defined_submission_tags()]
+    if text_to_display not in all_labels:
+        db_session.add(SubmissionLabelType(label_text=text_to_display))
+        db_session.commit()    
+    else:
+        flash('Tag already exists!', 'submission')
+    return redirect(url_for('admin_index'))
+
+
+@app.route('/admin/delete_submission_label_type/<int:tag_id>', methods=('POST',))
+@admin_required
+def admin_delete_submission_label_type(tag_id):
+    delete_submission_label(tag_id)
     return redirect(url_for('admin_index'))
 
 
@@ -409,20 +459,52 @@ def delete_source_tag(source_id, label_id):
     db_session.commit()
 
 
-@app.route("/col/add_label/<sid>/<int:label_id>", methods=('POST',))
+def create_submission_tag(submission_id, label_id):
+    submission = Submission.query.filter(Submission.id == submission_id).first()
+    db_session.add(SubmissionTag(submission_id=submission.id,
+                             label_id=label_id))
+    db_session.commit()
+
+
+def delete_submission_tag(submission_id, label_id):
+    submission = Submission.query.filter(Submission.id == submission_id).first()
+    matching_tag = SubmissionTag.query.filter(and_(SubmissionTag.label_id == label_id,
+                                               SubmissionTag.submission_id == submission.id)).all()
+    for tag in matching_tag:
+        db_session.delete(tag)
+    db_session.commit()
+
+
+@app.route("/col/add_source_label/<sid>/<label_id>", methods=('POST',))
 @login_required
-def add_label(sid, label_id):
+def add_source_label(sid, label_id):
     source = get_source(sid)
     create_source_tag(source.id, label_id)
-    return redirect(url_for('index'))
+    return redirect(url_for('col', sid=sid))
 
 
-@app.route("/col/remove_label/<sid>/<int:label_id>", methods=('POST',))
+@app.route("/col/remove_source_label/<sid>/<label_id>", methods=('POST',))
 @login_required
-def remove_label(sid, label_id):
+def remove_source_label(sid, label_id):
     source = get_source(sid)
     delete_source_tag(source.id, label_id)
-    return redirect(url_for('index'))
+    return redirect(url_for('col', sid=sid))
+
+
+@app.route("/col/add_submission_label/<sid>/<filename>/<label_id>", methods=('POST',))
+@login_required
+def add_submission_label(sid, filename, label_id):
+    submission = get_submission(filename)
+    create_submission_tag(submission.id, label_id)
+    return redirect(url_for('col', sid=sid))
+
+
+@app.route("/col/remove_submission_label/<sid>/<filename>/<label_id>", methods=('POST',))
+@login_required
+def remove_submission_label(sid, filename, label_id):
+    submission = get_submission(filename)
+    delete_submission_tag(submission.id, label_id)
+    return redirect(url_for('col', sid=sid))
 
 
 @app.route('/account/2fa', methods=('GET', 'POST'))
@@ -500,20 +582,13 @@ def remove_star(sid):
     return redirect(url_for('index'))
 
 
-@app.route('/')
-@login_required
-def index():
+def get_stars_and_labels(sources):
+    """Get the stars and labels for sources"""
     unstarred = []
     starred = []
-
-    # Long SQLAlchemy statements look best when formatted according to
-    # the Pocoo style guide, IMHO:
-    # http://www.pocoo.org/internal/styleguide/
-    sources = Source.query.filter_by(pending=False) \
-                          .order_by(Source.last_updated.desc()) \
-                          .all()
     source_labels = {}
     all_source_labels = get_source_tags_in_use()
+
     for source in sources:
         star = SourceStar.query.filter_by(source_id=source.id).first()
         source_labels.update({source.id: get_source_tags(source.id)})
@@ -525,17 +600,81 @@ def index():
             Submission.query.filter_by(source_id=source.id,
                                        downloaded=False).all())
 
+    return starred, unstarred, source_labels, all_source_labels
+
+
+@app.route('/')
+@login_required
+def index():
+    # Long SQLAlchemy statements look best when formatted according to
+    # the Pocoo style guide, IMHO:
+    # http://www.pocoo.org/internal/styleguide/
+    sources = Source.query.filter_by(pending=False) \
+                          .order_by(Source.last_updated.desc()) \
+                          .all()
+
+    starred, unstarred, labels, all_labels = get_stars_and_labels(sources)
+
     return render_template('index.html', unstarred=unstarred, starred=starred,
-                           source_labels=source_labels,
-                           all_labels=all_source_labels)
+                           source_labels=labels, all_labels=all_labels)
+
+
+@app.route('/filter_by_label/<int:label_id>', methods=('POST',))
+@login_required
+def filter_index(label_id):
+    sources = db_session.query(Source, SourceTag) \
+                        .filter_by(pending=False) \
+                        .join(SourceTag) \
+                        .filter_by(label_id=label_id) \
+                        .order_by(Source.last_updated.desc()) \
+                        .all()
+
+    sources = [x.Source for x in sources]
+    starred, unstarred, labels, all_labels = get_stars_and_labels(sources)
+
+    return render_template('index.html', unstarred=unstarred, starred=starred,
+                           source_labels=labels, all_labels=all_labels,
+                           filter_label=label_id)
 
 
 @app.route('/col/<sid>')
 @login_required
 def col(sid):
     source = get_source(sid)
+
+    # Tags on source
+    source_labels = get_source_tags(source.id)
+    selected_source_labels = [x.SourceLabelType.label_text for x in source_labels]
+    all_source_labels = get_all_defined_source_tags()
+
+    unselected_source_labels = []
+    for possible_label in all_source_labels:
+        if possible_label.label_text not in selected_source_labels:
+            unselected_source_labels.append(possible_label)
+
+    # Tags on submissions
+    all_submission_labels = get_all_defined_submission_tags()
+    submission_labels, unselected_submission_labels = {}, {}
+    for doc in source.collection:
+        submission = get_submission(doc.filename)
+        temp_submission_labels = get_submission_tags(submission.id)
+        submission_labels.update({doc.filename: temp_submission_labels})
+        if temp_submission_labels:
+            selected_submission_labels = [x.SubmissionLabelType.label_text for x in temp_submission_labels]
+        else:
+            selected_submission_labels = []
+        temp_unselected_labels = []
+        for possible_label in all_submission_labels:
+            if possible_label.label_text not in selected_submission_labels:
+                temp_unselected_labels.append(possible_label)
+        unselected_submission_labels.update({doc.filename: temp_unselected_labels})
+
     source.has_key = crypto_util.getkey(sid)
-    return render_template("col.html", sid=sid, source=source)
+    return render_template("col.html", sid=sid, source=source,
+                           source_labels=source_labels,
+                           unselected_source_labels=unselected_source_labels,
+                           submission_labels=submission_labels,
+                           unselected_submission_labels=unselected_submission_labels)
 
 
 def delete_collection(source_id):
