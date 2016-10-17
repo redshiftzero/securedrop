@@ -11,16 +11,13 @@
         <button type="submit" id="delete_collections" name="action" value="delete" class="small"><i class="fa fa-minus-circle"></i> Delete selected</button>
         <button type="submit" name="action" value="star" class="small"><i class="fa fa-minus-circle"></i> Star Selected</button>
         <button type="submit" name="action" value="un-star" class="small"><i class="fa fa-minus-circle"></i> Un-star Selected</button>
+        <div>Filter by label:
+          {% set selected_labels = all_labels %}
+          {% for label in all_labels %}
+            <button type="submit" name="action" value="{{ label.SourceLabelType.id }}" class="untagged-tag-label">{{ label.SourceLabelType.label_text }}</button>
+          {% endfor %}
+        </div>
       </p>
-
-      <p>
-      <!--<div class="label">-->
-                <div>Filter by label: 
-      {% for label in all_labels %}
-      <a class="btn small" >{{ label.TagLabel.label_text }}</a>
-      {% endfor %}
-                </div>
-      <!--</div>--></p>
 
       {% if starred %}
         <ul id="cols" class="plain starred">
@@ -43,12 +40,10 @@
                   </span>
                 {% endif %}
               </div>
-              <div class="label">
-                <div>
-                {% for tag in source_labels[source.id] %}
-                <span>{{ tag.TagLabel.label_text }}</span>
+              <div>
+                {% for source_label in source_labels[source.id] %}
+                  <a><span class="tagged tag-label">{{ source_label.SourceLabelType.label_text }}</span></a>
                 {% endfor %}
-                </div>
               </div>
             </li>
           {% endfor %}
@@ -76,12 +71,10 @@
                   </span>
                 {% endif %}
               </div>
-              <div class="submission-count">
-                <div>
+              <div>
                 {% for tag in source_labels[source.id] %}
-                <span>{{ tag.TagLabel.label_text }}</span>
+                  <a><span class="tagged tag-label">{{ tag.SourceLabelType.label_text }}</span></a>
                 {% endfor %}
-                </div>
               </div>
             </li>
           {% endfor %}
