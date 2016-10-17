@@ -56,7 +56,6 @@ def get_source(sid):
     source = None
     query = Source.query.filter(Source.filesystem_id == sid)
     source = get_one_or_else(query, app.logger, abort)
-
     return source
 
 
@@ -652,24 +651,29 @@ def col(sid):
         if possible_label.label_text not in selected_source_labels:
             unselected_source_labels.append(possible_label)
 
+
     # Tags on submissions
     all_submission_labels = get_all_defined_submission_tags()
     submission_labels, unselected_submission_labels = {}, {}
     for doc in source.collection:
-        submission = get_submission(doc.filename)
-        temp_submission_labels = get_submission_tags(submission.id)
-        submission_labels.update({doc.filename: temp_submission_labels})
-        if temp_submission_labels:
-            selected_submission_labels = [x.SubmissionLabelType.label_text for x in temp_submission_labels]
-        else:
-            selected_submission_labels = []
-        temp_unselected_labels = []
-        for possible_label in all_submission_labels:
-            if possible_label.label_text not in selected_submission_labels:
-                temp_unselected_labels.append(possible_label)
-        unselected_submission_labels.update({doc.filename: temp_unselected_labels})
+        if doc.filename.endswith('-msg.gpg'):
+            submission = get_submission(doc.filename)
+
+            temp_submission_labels = get_submission_tags(submission.id)
+            submission_labels.update({doc.filename: temp_submission_labels})
+            if temp_submission_labels:
+                selected_submission_labels = [x.SubmissionLabelType.label_text for x in temp_submission_labels]
+            else:
+                selected_submission_labels = []
+            temp_unselected_labels = []
+
+            for possible_label in all_submission_labels:
+                if possible_label.label_text not in selected_submission_labels:
+                    temp_unselected_labels.append(possible_label)
+            unselected_submission_labels.update({doc.filename: temp_unselected_labels})
 
     source.has_key = crypto_util.getkey(sid)
+
     return render_template("col.html", sid=sid, source=source,
                            source_labels=source_labels,
                            unselected_source_labels=unselected_source_labels,
