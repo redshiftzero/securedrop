@@ -11,12 +11,6 @@
         <button type="submit" id="delete_collections" name="action" value="delete" class="small"><i class="fa fa-minus-circle"></i> Delete selected</button>
         <button type="submit" name="action" value="star" class="small"><i class="fa fa-minus-circle"></i> Star Selected</button>
         <button type="submit" name="action" value="un-star" class="small"><i class="fa fa-minus-circle"></i> Un-star Selected</button>
-        <div>Filter by label:
-          {% set selected_labels = all_labels %}
-          {% for label in all_labels %}
-            <button type="submit" name="action" value="{{ label.SourceLabelType.id }}" class="untagged-tag-label">{{ label.SourceLabelType.label_text }}</button>
-          {% endfor %}
-        </div>
       </p>
 
       {% if starred %}
@@ -86,4 +80,19 @@
     <p>No documents have been submitted!</p>
   {% endif %}
 </div>
+{% if all_labels %}
+  <div>
+    <form id="filter_by_label" method="post">
+      Filter by label: 
+      <input name="csrf_token" type="hidden" value="{{ csrf_token() }}"/>
+        {% for label in all_labels %}
+          {% if label.SourceLabelType.id == filter_label %}
+            <a href="/" class="tag-label">{{ label.SourceLabelType.label_text }} <i class="fa fa-times"></i></a>
+          {% else %}
+            <button type="submit" name="action" formaction="/filter_by_label/{{ label.SourceLabelType.id }}" class="untagged-tag-label">{{ label.SourceLabelType.label_text }}</button>
+          {% endif %}
+        {% endfor %}
+    </form>
+  </div>
+{% endif %}
 {% endblock %}
