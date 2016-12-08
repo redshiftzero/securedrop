@@ -34,6 +34,7 @@
 - name: Compile SASS to CSS
   shell: >
     if [ -d /home/travis ]; then
+      source /home/travis/.rvm/scripts/rvm
       /home/travis/.rvm/bin/rvm install 2.1.0 &&
       bash -l -c "/home/travis/.rvm/bin/rvm use 2.1.0" &&
       gem install sass &&
@@ -43,7 +44,7 @@
       sass --update sass:static/css
     fi
   environment:
-    PATH: /root/.gem/ruby/2.1.0/bin:{{ ansible_env.PATH }}
+    PATH: /root/.gem/ruby/2.1.0/bin:/root/.gem/ruby/1.9.0/bin:{{ ansible_env.PATH }}
   args:
     chdir: '{{ securedrop_repo  }}/securedrop'
 
