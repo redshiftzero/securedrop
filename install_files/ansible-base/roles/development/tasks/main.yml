@@ -42,8 +42,8 @@
     else
       sass --update sass:static/css
     fi
-#  environment:
-#    PATH: /root/.gem/ruby/1.9.1/bin:/root/.gem/ruby/2.1.0/bin:{{ ansible_env.PATH }}
+  environment:
+    PATH: /root/.gem/ruby/1.9.1/bin:/root/.gem/ruby/2.1.0/bin:{{ ansible_env.PATH }}
   args:
     chdir: '{{ securedrop_repo  }}/securedrop'
 
