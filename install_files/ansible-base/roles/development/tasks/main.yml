@@ -31,7 +31,7 @@
   tags:
     - development
 
-- name: Compile sass to css
+- name: Compile SASS to CSS
   shell: >
     if [ -d /home/travis ]; then
       /home/travis/.rvm/bin/rvm install 2.1.0 &&
