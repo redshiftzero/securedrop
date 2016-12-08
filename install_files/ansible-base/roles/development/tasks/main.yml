@@ -35,7 +35,7 @@
   shell: >
     if [ -d /home/travis ]; then
       /home/travis/.rvm/bin/rvm install 2.3.0 &&
-      /home/travis/.rvm/bin/rvm use 2.3.0 &&
+      bash -l -c "/home/travis/.rvm/bin/rvm use 2.3.0" &&
       gem install sass &&
       gem install executable-hooks &&
       $(find /home/travis/.rvm -name sass | grep /bin/sass | head -1) --update sass:static/css
