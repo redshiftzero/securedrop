@@ -16,7 +16,6 @@ before_install:
   - sudo mknod -m 0666 /dev/random c 1 9
   - echo HRNGDEVICE=/dev/urandom | sudo tee /etc/default/rng-tools
   - sudo /etc/init.d/rng-tools restart
-  - sudo gem install --no-user-install sass
 install:
   - pip install ansible==1.8.4
   - pip install coveralls
