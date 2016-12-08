@@ -37,11 +37,13 @@
       /home/travis/.rvm/bin/rvm install 2.3.0 &&
       /home/travis/.rvm/bin/rvm use 2.3.0 &&
       gem install sass &&
-      gem install --user-install executable-hooks &&
+      gem install executable-hooks &&
       $(find /home/travis/.rvm -name sass | grep /bin/sass | head -1) --update sass:static/css
     else
       sass --update sass:static/css
     fi
+  environment:
+    PATH: /root/.gem/ruby/1.9.1/bin:{{ ansible_env.PATH }}
   args:
     chdir: '{{ securedrop_repo  }}/securedrop'
 
