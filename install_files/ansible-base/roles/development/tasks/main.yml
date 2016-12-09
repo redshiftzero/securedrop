@@ -37,6 +37,7 @@
       source /home/travis/.rvm/scripts/rvm
       /home/travis/.rvm/bin/rvm install 2.1.0 &&
       bash -l -c "/home/travis/.rvm/bin/rvm use 2.1.0" &&
+      sudo gem install --no-user-install sass &&
       gem install sass &&
       sudo gem install --user-install executable-hooks &&
       $(find /home/travis/.rvm -name sass | grep /bin/sass | head -1) --update sass:static/css
