@@ -21,8 +21,7 @@
     # /root. Since this command doesn't need to be run as root and is part of a
     # crutch anyway, I've just hardcoded /home/vagrant.
     dest: /home/vagrant/
-    url: https://launchpad.net/~ubuntu-mozilla-security/+archive/ubuntu/ppa/+build/9727836/+files/firefox_46.0.1+build1-0ubuntu0.14.04.3_amd64.deb
-    sha256sum: 88d25053306d33658580973b063cd459a56e3596a3a298c1fb8ab1d52171d860
+    url: http://security.ubuntu.com/ubuntu/pool/main/f/firefox/firefox-locale-en_45.0.2+build1-0ubuntu1_amd64.deb
   tags:
     - apt
 
@@ -39,7 +38,7 @@
 
 - name: Install Firefox 46.0.1 for compatibility with Selenium 2.53.6.
   apt:
-    deb: /home/vagrant/firefox_46.0.1+build1-0ubuntu0.14.04.3_amd64.deb
+    deb: /home/vagrant/firefox-locale-en_45.0.2+build1-0ubuntu1_amd64.deb
   tags:
     - apt
 
