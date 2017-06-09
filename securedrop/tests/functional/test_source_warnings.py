@@ -29,11 +29,11 @@ class SourceInterfaceBannerWarnings(
         profile = webdriver.FirefoxProfile()
         profile.set_preference("general.useragent.override",
             "Mozilla/5.0 (Windows NT 6.1; rv:52.0) Gecko/20100101 Firefox/52.0")
-        self.driver = webdriver.Firefox(profile)
+        driver = webdriver.Firefox(profile)
 
-        self.driver.get(self.source_location)
+        driver.get(self.source_location)
 
-        warning_banner = self.driver.find_element_by_class_name('js-warning')
+        warning_banner = driver.find_element_by_class_name('js-warning')
 
         self.assertIn("We recommend turning the Security Slider to High to protect your anonymity",
                       warning_banner.text)
