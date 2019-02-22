@@ -360,8 +360,7 @@ workflows:
             branches:
               ignore:
                 - /docs-.*/
-          requires:
-            - lint
+
   nightly:
     triggers:
       - schedule:
