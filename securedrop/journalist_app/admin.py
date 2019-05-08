@@ -9,9 +9,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
 
 from db import db
-from models import Journalist, InvalidUsernameException, PasswordError
+from models import Journalist, InvalidUsernameException, FirstOrLastNameError, PasswordError
 from journalist_app.decorators import admin_required
-from journalist_app.utils import (make_password, commit_account_changes,
+from journalist_app.utils import (make_password, commit_account_changes, set_name,
                                   set_diceware_password, validate_hotp_secret)
 from journalist_app.forms import LogoForm, NewUserForm
 
@@ -54,6 +54,8 @@ def make_blueprint(config):
         if form.validate_on_submit():
             form_valid = True
             username = request.form['username']
+            first_name = request.form['first_name']
+            last_name = request.form['last_name']
             password = request.form['password']
             is_admin = bool(request.form.get('is_admin'))
 
@@ -62,6 +64,8 @@ def make_blueprint(config):
                 if request.form.get('is_hotp', False):
                     otp_secret = request.form.get('otp_secret', '')
                 new_user = Journalist(username=username,
+                                      first_name=first_name,
+                                      last_name=last_name,
                                       password=password,
                                       is_admin=is_admin,
                                       otp_secret=otp_secret)
@@ -172,6 +176,26 @@ def make_blueprint(config):
                 else:
                     user.username = new_username
 
+            if request.form.get('first_name', None):
+                try:
+                    first_name = request.form['first_name']
+                    Journalist.check_name_acceptable(first_name)
+                    if first_name != user.first_name:
+                        user.first_name = first_name
+                except FirstOrLastNameError as e:
+                    flash('Invalid name: ' + str(e), 'error')
+                    return redirect(url_for("admin.edit_user", user_id=user_id))
+
+            if request.form.get('last_name', None):
+                try:
+                    last_name = request.form['last_name']
+                    Journalist.check_name_acceptable(last_name)
+                    if last_name != user.last_name:
+                        user.last_name = last_name
+                except FirstOrLastNameError as e:
+                    flash('Invalid name: ' + str(e), 'error')
+                    return redirect(url_for("admin.edit_user", user_id=user_id))
+
             user.is_admin = bool(request.form.get('is_admin'))
 
             commit_account_changes(user)
@@ -190,6 +214,19 @@ def make_blueprint(config):
 
         password = request.form.get('password')
         set_diceware_password(user, password)
+        return redirect(url_for('admin.edit_user', user_id=user_id))
+
+    @view.route('/edit/<int:user_id>/change-name', methods=('POST',))
+    @admin_required
+    def set_name(user_id):
+        try:
+            user = Journalist.query.get(user_id)
+        except NoResultFound:
+            abort(404)
+
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        set_name(user, first_name, last_name)
         return redirect(url_for('admin.edit_user', user_id=user_id))
 
     @view.route('/delete/<int:user_id>', methods=('POST',))
@@ -214,6 +251,19 @@ def make_blueprint(config):
             abort(404)
 
         return redirect(url_for('admin.index'))
+
+    @view.route('/edit/<int:user_id>/change-name', methods=('POST',))
+    @admin_required
+    def change_name(user_id):
+        try:
+            user = Journalist.query.get(user_id)
+        except NoResultFound:
+            abort(404)
+
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        set_name(user, first_name, last_name)
+        return redirect(url_for('admin.edit_user', user_id=user_id))
 
     @view.route('/edit/<int:user_id>/new-password', methods=('POST',))
     @admin_required

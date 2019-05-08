@@ -5,12 +5,18 @@
   {# Only admins may edit usernames and admin status #}
   <h1>{{ gettext('Edit user "{user}"').format(user=user.username) }}</h1>
   <p><a href="/admin">« {{ gettext('Back to admin interface') }}</a></p>
-  <h2>{{ gettext('Change Username &amp; Admin Status') }}</h2>
+  <h2>{{ gettext('Change Name &amp; Admin Status') }}</h2>
   <form method="post">
     <input name="csrf_token" type="hidden" value="{{ csrf_token() }}">
     <p>
       <label for="username">{{ gettext('Change username') }}</label>
       <input name="username" id="username" type="text" placeholder="{{ user.username }}">
+    </p>
+    <p>
+      <label for="first_name">{{ gettext('First name') }}</label>
+      <input name="first_name" id="first_name" type="text" placeholder="{{ user.first_name }}">
+      <label for="last_name">{{ gettext('Last name') }}</label>
+      <input name="last_name" id="last_name" type="text" placeholder="{{ user.last_name }}">
     </p>
     <p>
       <input name="is_admin" id="is-admin" type="checkbox" {% if user.is_admin %}checked{% endif %}>
@@ -20,8 +26,28 @@
   </form>
 {% else %}
   <h1>{{ gettext('Edit your account') }}</h1>
+  <h2>{{ gettext('Change Name') }}</h2>
+  <form>
+    <p>
+      <label for="first_name">{{ gettext('Change first name') }}</label>
+      <input name="first_name" id="first_name" type="text" placeholder="{{ first_name }}">
+      <label for="last_name">{{ gettext('Change last name') }}</label>
+      <input name="last_name" id="last_name" type="text" placeholder="{{ last_name }}">
+    </p>
+    <button class="sd-button" type="submit" id="update">{{ gettext('UPDATE') }}</button>
+  </form>
 {% endif %}
 
+<!-- <form action="{{ change_name_url }}" method="post" id="change-name" class="login-form">
+  <input name="csrf_token" type="hidden" value="{{ csrf_token() }}">
+  <input name="first_name" type="hidden" value="{{ first_name }}">
+  <input name="last_name" type="hidden" value="{{ last_name }}">
+  <button class="sd-button btn" type="submit" id="change-name">
+    <i class="fas fa-sync"></i>
+    {{ gettext('CHANGE NAME') }}
+  </button>
+</form>
+ -->
 <h2>{{ gettext('Reset Password') }}</h2>
 
 <p>{{ gettext('SecureDrop now uses automatically generated diceware passwords.') }}</p>

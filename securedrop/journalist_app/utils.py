@@ -273,6 +273,19 @@ def delete_collection(filesystem_id):
     return job
 
 
+def set_name(user, first_name, last_name):
+    try:
+        user.set_first_name(first_name)
+        user.set_last_name(last_name)
+        db.session.commit()
+        flash(gettext('Name is updated.'))
+    except NameError:
+        flash(gettext('You submitted an invalid name.'))
+    except Exception as e:
+        flash(gettext('An unexpected error occurred.'))
+        current_app.logger.error("Account changes for '{}' failed: {}".format(user, e))
+
+
 def set_diceware_password(user, password):
     try:
         user.set_password(password)
