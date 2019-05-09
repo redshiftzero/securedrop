@@ -179,7 +179,8 @@ def make_blueprint(config):
             if request.form.get('first_name', None):
                 try:
                     first_name = request.form['first_name']
-                    Journalist.check_name_acceptable(first_name)
+                    if first_name:
+                        Journalist.check_name_acceptable(first_name)
                     if first_name != user.first_name:
                         user.first_name = first_name
                 except FirstOrLastNameError as e:
@@ -189,7 +190,8 @@ def make_blueprint(config):
             if request.form.get('last_name', None):
                 try:
                     last_name = request.form['last_name']
-                    Journalist.check_name_acceptable(last_name)
+                    if last_name:
+                        Journalist.check_name_acceptable(last_name)
                     if last_name != user.last_name:
                         user.last_name = last_name
                 except FirstOrLastNameError as e:
