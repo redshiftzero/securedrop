@@ -367,8 +367,8 @@ class Journalist(db.Model):
     MIN_NAME_LEN = 1
     MAX_NAME_LEN = 100
 
-    def __init__(
-        self, username, password, first_name=None, last_name=None, is_admin=False, otp_secret=None):
+    def __init__(self, username, password, first_name=None, last_name=None, is_admin=False,
+                 otp_secret=None):
         self.check_username_acceptable(username)
         self.username = username
         if first_name:

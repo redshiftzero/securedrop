@@ -124,6 +124,7 @@ def _get_username():
         else:
             return username
 
+
 def _get_first_name():
     while True:
         first_name = obtain_input('First name: ')
@@ -135,6 +136,7 @@ def _get_first_name():
         except NameError as e:
             print('Invalid name: ' + str(e))
 
+
 def _get_last_name():
     while True:
         last_name = obtain_input('Last name: ')
@@ -145,6 +147,7 @@ def _get_last_name():
             return last_name
         except NameError as e:
             print('Invalid name: ' + str(e))
+
 
 def _get_yubikey_usage():
     '''Function used to allow for test suite mocking'''

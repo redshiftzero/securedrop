@@ -21,9 +21,11 @@ def random_bytes(min, max, nullable):
         # python2 just wants strings, fix this in python3
         return random_chars(random.randint(min, max))
 
+
 def random_name():
     len = random.randint(1, 100)
     return random_chars(len)
+
 
 def random_username():
     len = random.randint(3, 64)

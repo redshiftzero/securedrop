@@ -11,8 +11,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from db import db
 from models import Journalist, InvalidUsernameException, FirstOrLastNameError, PasswordError
 from journalist_app.decorators import admin_required
-from journalist_app.utils import (make_password, commit_account_changes, set_name,
-                                  set_diceware_password, validate_hotp_secret)
+from journalist_app.utils import (make_password, commit_account_changes, set_diceware_password,
+                                  validate_hotp_secret)
 from journalist_app.forms import LogoForm, NewUserForm
 
 

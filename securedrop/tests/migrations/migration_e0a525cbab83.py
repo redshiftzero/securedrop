@@ -216,28 +216,39 @@ class DowngradeTester():
         with self.app.app_context():
             add_journalist_after_migration()
             add_journalist_after_migration(False, False)
+
+            journalists_sql = "SELECT * FROM journalists"
+            journalists = db.engine.execute(text(journalists_sql)).fetchall()
+
             assert len(journalists) == JOURNO_NUM + 2
             journalist_with_name_count = 0
             journalist_without_name_count = 0
+
             for journalist in journalists:
                 if journalist.first_name is not None and journalist.last_name is not None:
                     journalist_with_name_count += 1
                 elif journalist.first_name is None and journalist.last_name is None:
                     journalist_without_name_count += 1
+
             assert journalist_with_name_count == 1
             assert journalist_without_name_count == JOURNO_NUM + 1
 
             replies_sql = "SELECT * FROM replies"
             replies = db.engine.execute(text(replies_sql)).fetchall()
+
             assert len(replies) == JOURNO_NUM - 1
+
             add_reply_after_migration(1, 1, False)
+
             assert len(replies_sql) == JOURNO_NUM
+
             for reply in replies:
                 assert reply.deleted_by_source is False
 
         with self.app.app_context():
             journalists_sql = "SELECT * FROM journalists"
             journalists = db.engine.execute(text(journalists_sql)).fetchall()
+
             for journalist in journalists:
                 try:
                     assert journalist.uuid is not None
@@ -248,6 +259,7 @@ class DowngradeTester():
 
             replies_sql = "SELECT * FROM replies"
             replies = db.engine.execute(text(replies_sql)).fetchall()
+
             for reply in replies:
                 try:
                     assert reply['deleted_by_source'] is None
