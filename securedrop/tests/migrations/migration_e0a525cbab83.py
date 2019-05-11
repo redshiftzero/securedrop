@@ -185,12 +185,16 @@ class UpgradeTester():
             replies = db.engine.execute(text(replies_sql)).fetchall()
             assert len(replies) == JOURNO_NUM
 
-            # deleted_by_source_count = 0
+            deleted_by_source_count_dunder_eq = 0
+            deleted_by_source_count_is = 0
             for reply in replies:
                 assert reply.deleted_by_source is not None
-                # if reply.deleted_by_source is False:
-                #     deleted_by_source_count += 1
-            # assert deleted_by_source_count == 1
+                if reply.deleted_by_source == False:
+                    deleted_by_source_count_dunder_eq += 1
+                if reply.deleted_by_source is False:
+                    deleted_by_source_count_is += 1
+            assert deleted_by_source_count_dunder_eq == JOURNO_NUM
+            assert deleted_by_source_count_is == 0
 
             journalists_sql = "SELECT * FROM journalists"
             journalists = db.engine.execute(text(journalists_sql)).fetchall()
