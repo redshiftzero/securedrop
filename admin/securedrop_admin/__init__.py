@@ -617,15 +617,15 @@ def find_or_generate_new_torv3_keys(args):
     # For app ssh service
     app_ssh_public_key, app_ssh_private_key = generate_new_v3_keys()
     # For mon ssh service
-    mon_ssh__public_key, mon_ssh_private_key = generate_new_v3_keys()
-    tor_v3_service_info = dict(
+    mon_ssh_public_key, mon_ssh_private_key = generate_new_v3_keys()
+    tor_v3_service_info = {
             "app_journalist_public_key": app_journalist_public_key,
             "app_journalist_private_key": app_journalist_private_key,
             "app_ssh_public_key": app_ssh_public_key,
             "app_ssh_private_key": app_ssh_private_key,
-            "mon_ssh_public_key": mon_public_ssh_key,
+            "mon_ssh_public_key": mon_ssh_public_key,
             "mon_ssh_private_key": mon_ssh_private_key,
-    )
+    }
     with open(secret_key_path, 'w') as fobj:
         json.dump(tor_v3_service_info, fobj, indent=4)
 
