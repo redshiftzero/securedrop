@@ -33,7 +33,7 @@
   when:
     - v3_onion_services|default(False)
     # Source Interface is always public, don't configure client auth
-    - "source" not in item.service
+    - "'source' not in item.service"
   tags:
     - tor
 
@@ -64,8 +64,8 @@
   set_fact:
     tor_v3_ssh_pubkey: "{{ v3_local_key_info.app_ssh_public_key if 'securedrop_application_server' in group_names else v3_local_key_info.mon_ssh_public_key }}"
   when:
-    - "v3_onion_services|default(False)"
-    - "sshv3" in tor_auth_instances_v3
+    - v3_onion_services|default(False)
+    - "'sshv3' in tor_auth_instances_v3"
     - enable_ssh_over_tor
   tags:
     - tor
@@ -79,8 +79,8 @@
     group: "{{ tor_user }}"
     mode: "0600"
   when:
-    - "v3_onion_services|default(False)"
-    - "journalistv3" in tor_auth_instances_v3
+    - v3_onion_services|default(False)
+    - "'journalistv3' in tor_auth_instances_v3"
   tags:
     - tor
 
@@ -93,8 +93,8 @@
     group: "{{ tor_user }}"
     mode: "0600"
   when:
-    - "v3_onion_services|default(False)"
-    - "sshv3" in tor_auth_instances_v3
+    - v3_onion_services|default(False)
+    - "'sshv3' in tor_auth_instances_v3"
     - enable_ssh_over_tor
   tags:
     - tor
