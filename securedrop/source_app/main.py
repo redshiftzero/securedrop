@@ -17,6 +17,7 @@ import store
 from db import db
 from models import Source, Submission, Reply, get_one_or_else
 from sdconfig import SDConfig
+from source_app.apiv2 import TOKEN_EXPIRATION_MINS
 from source_app.decorators import login_required
 from source_app.utils import (logged_in, generate_unique_codename,
                               async_genkey, normalize_timestamps,
@@ -157,8 +158,14 @@ def make_blueprint(config: SDConfig) -> Blueprint:
                          g.filesystem_id,
                          g.codename)
 
+        current_app.logger.info("client needs to register still?: {}".format(
+                    g.source.is_signal_registered()))
+
         return render_template(
             'lookup.html',
+            token=session["token"],
+            source_uuid=g.source.uuid,
+            to_register=not g.source.is_signal_registered(),
             allow_document_uploads=current_app.instance_config.allow_document_uploads,
             codename=g.codename,
             replies=replies,
@@ -315,12 +322,16 @@ def make_blueprint(config: SDConfig) -> Blueprint:
             codename = request.form['codename'].strip()
             if valid_codename(codename):
                 session.update(codename=codename, logged_in=True)
+                # TEMP (would need this on the generate route too)
+                source = Source.login(codename)
+                session['token'] = source.generate_api_token(expiration=TOKEN_EXPIRATION_MINS * 60)
                 return redirect(url_for('.lookup', from_login='1'))
             else:
                 current_app.logger.info(
                         "Login failed for invalid codename")
                 flash(gettext("Sorry, that is not a recognized codename."),
                       "error")
+
         return render_template('login.html', form=form)
 
     @view.route('/logout')
@@ -337,6 +348,7 @@ def make_blueprint(config: SDConfig) -> Blueprint:
             user_locale = g.locale
             session.clear()
             session['locale'] = user_locale
+            # TODO: Invalidate token if it exists
 
             return render_template('logout.html')
         else:
